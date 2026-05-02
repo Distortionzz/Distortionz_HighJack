@@ -1,0 +1,6 @@
+{
+    "version": "1.0.5",
+    "name": "distortionz_hijack",
+    "download": "https://github.com/Distortionzz/Distortionz_Hijack",
+    "changelog": "v1.0.5 — Integrated qbx_vehiclekeys. Player automatically receives vehicle keys when entering the target car (so qbx_smallresources doesn't block driving). Keys are removed on successful delivery before the vehicle is despawned. Spawned vehicles are now unlocked by default for clean hop-in flow."
+}

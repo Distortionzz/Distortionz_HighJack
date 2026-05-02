@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Distortionz Hijack</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="hijackPanel" class="contract-panel hidden">
+        <div class="panel-header">
+            <span class="contract-tag">
+                <i class="dot"></i>
+                <span class="tag-text">HIJACK CONTRACT</span>
+            </span>
+            <span id="contractTimer" class="contract-timer">00:00</span>
+        </div>
+
+        <div class="panel-stage">
+            <div class="stage-pill" id="stagePill">
+                <span class="stage-icon" id="stageIcon">⌖</span>
+                <span class="stage-label" id="stageLabel">SEARCHING</span>
+            </div>
+            <span class="stage-hint" id="stageHint">Search the marked zone</span>
+        </div>
+
+        <div class="panel-body">
+            <div class="target-row primary">
+                <span class="row-label">Vehicle</span>
+                <span class="row-value" id="vehicleName">—</span>
+            </div>
+            <div class="target-row">
+                <span class="row-label">Color</span>
+                <span class="row-value" id="vehicleColor">—</span>
+            </div>
+            <div class="target-row">
+                <span class="row-label">Plate</span>
+                <span class="row-value plate" id="vehiclePlate">—</span>
+            </div>
+        </div>
+
+        <div class="panel-footer">
+            <span class="tier-pill" id="tierPill">COMMON</span>
+            <span class="payout">
+                <span class="payout-label">Reward</span>
+                <strong id="payoutValue">$0</strong>
+            </span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
