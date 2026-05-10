@@ -316,6 +316,7 @@ lib.callback.register('distortionz_hijack:server:deliver', function(source, payl
 
     local pCoords      = payload.coords
     local engineHealth = tonumber(payload.engineHealth) or 1000.0
+    local bodyHealth   = tonumber(payload.bodyHealth)   or 1000.0  -- v1.1.0
     local plateClient  = payload.plate or ''
 
     -- Validate proximity to drop-off
@@ -335,14 +336,31 @@ lib.callback.register('distortionz_hijack:server:deliver', function(source, payl
         return { success = false, reason = 'This isn\'t the right vehicle.' }
     end
 
-    -- Damage = how much engine health was lost from full (1000)
+    -- Clamp inputs (defensive — trust no client value)
+    if engineHealth < 0    then engineHealth = 0 end
+    if engineHealth > 1000 then engineHealth = 1000 end
+    if bodyHealth   < 0    then bodyHealth   = 0 end
+    if bodyHealth   > 1000 then bodyHealth   = 1000 end
+
+    -- Damage = engine HP lost from full (used for tier qualification)
     local damageTaken = math.max(0, 1000.0 - engineHealth)
 
-    -- Compute tier
+    -- Compute tier (existing system)
     local now = os.time()
     local tier = ComputeRewardTier(job, now, damageTaken)
     local tierData = Config.Rewards.tiers[tier]
-    local finalPay = math.floor(job.basePay * (tierData.multiplier or 1))
+    local tieredPay = math.floor(job.basePay * (tierData.multiplier or 1))
+
+    -- v1.1.0 — Damage penalty (engine + body HP loss × $/HP)
+    local penalty = 0
+    if Config.DamagePenalty and Config.DamagePenalty.enabled then
+        local engineLost = math.max(0, 1000.0 - engineHealth)
+        local bodyLost   = math.max(0, 1000.0 - bodyHealth)
+        local perHp      = tonumber(Config.DamagePenalty.dollarsPerHp) or 0
+        penalty = math.floor((engineLost + bodyLost) * perHp)
+    end
+    local floor = (Config.DamagePenalty and Config.DamagePenalty.minPayoutFloor) or 0
+    local finalPay = math.max(floor, tieredPay - penalty)
 
     -- Pay
     local paid = PayPlayer(src, finalPay)
@@ -378,7 +396,8 @@ lib.callback.register('distortionz_hijack:server:deliver', function(source, payl
     activeJobs[src] = nil
     SetCooldown(src, Config.Rewards.successCooldownMinutes)
 
-    Debug(('Delivered: src=%s tier=%s pay=%s loot=%s'):format(src, tier, finalPay, lootDropped and lootDropped.item or 'none'))
+    Debug(('Delivered: src=%s tier=%s base=%s tiered=%s penalty=-%s pay=%s loot=%s'):format(
+        src, tier, job.basePay, tieredPay, penalty, finalPay, lootDropped and lootDropped.item or 'none'))
 
     return {
         success     = true,
@@ -386,6 +405,8 @@ lib.callback.register('distortionz_hijack:server:deliver', function(source, payl
         tierLabel   = tierData.label,
         tierColor   = tierData.color,
         payout      = finalPay,
+        basePayout  = tieredPay,   -- v1.1.0 — what they would've earned without damage
+        penalty     = penalty,      -- v1.1.0 — how much the wreckage cost them
         lootDropped = lootDropped,
     }
 end)

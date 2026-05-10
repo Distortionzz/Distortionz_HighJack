@@ -90,6 +90,58 @@ CreateThread(function()
     end
 end)
 
+-- ─── v1.1.0 — Damage sampler (Engine + Body health, live penalty) ───
+-- Samples the target vehicle's engine + body health while the player
+-- is driving it (post-confirm), pushes percentages to the HUD with a
+-- live penalty preview. Server is the source of truth for the FINAL
+-- penalty at delivery; this loop is purely visual/preview.
+CreateThread(function()
+    local interval = (Config.DamagePenalty and Config.DamagePenalty.snapshotIntervalMs) or 500
+    local dollarsPerHp = (Config.DamagePenalty and Config.DamagePenalty.dollarsPerHp) or 0
+    local enabled = Config.DamagePenalty and Config.DamagePenalty.enabled
+
+    while true do
+        local sleep = interval
+
+        if enabled and activeJob and activeJob.confirmed and DoesEntityExist(activeJob.targetVehicle) then
+            local veh = activeJob.targetVehicle
+            local ped = PlayerPedId()
+            -- Only sample while the player is in the target vehicle
+            if GetVehiclePedIsIn(ped, false) == veh then
+                local engHp  = GetVehicleEngineHealth(veh) or 1000.0   -- 0..1000
+                local bodyHp = GetVehicleBodyHealth(veh)   or 1000.0   -- 0..1000
+
+                -- Clamp to sane range (engine can go negative when burning)
+                if engHp  < 0    then engHp  = 0 end
+                if engHp  > 1000 then engHp  = 1000 end
+                if bodyHp < 0    then bodyHp = 0 end
+                if bodyHp > 1000 then bodyHp = 1000 end
+
+                local engineLost = 1000.0 - engHp
+                local bodyLost   = 1000.0 - bodyHp
+                local penalty    = math.floor((engineLost + bodyLost) * dollarsPerHp)
+
+                SendNUIMessage({
+                    action    = 'health',
+                    show      = true,
+                    enginePct = (engHp  / 1000.0) * 100.0,
+                    bodyPct   = (bodyHp / 1000.0) * 100.0,
+                    penalty   = penalty,
+                })
+            end
+        elseif activeJob and not activeJob.confirmed then
+            -- Hide health block during searching/found stages
+            SendNUIMessage({ action = 'health', show = false })
+            sleep = 1000
+        else
+            sleep = 1000
+        end
+
+        Wait(sleep)
+    end
+end)
+
+
 -- ─── Contact ped spawn / cleanup ────────────────────────────────────
 
 local function SpawnContactPed()
@@ -104,6 +156,12 @@ local function SpawnContactPed()
     FreezeEntityPosition(contactPed, true)
     SetPedFleeAttributes(contactPed, 0, false)
     SetPedDiesWhenInjured(contactPed, false)
+
+    -- v1.1.3 — Distortionz convention: flag as protected so other scripts
+    -- (distortionz_robped, etc.) skip this ped for player interactions.
+    Entity(contactPed).state:set('distortionz_protected_ped', true, true)
+    Entity(contactPed).state:set('distortionz_contact_ped',   true, true)
+    Entity(contactPed).state:set('distortionz_hijack_ped',    true, true)
 
     if Config.Contact.scenario then
         TaskStartScenarioInPlace(contactPed, Config.Contact.scenario, 0, true)
@@ -235,6 +293,9 @@ local function SpawnTargetVehicle()
     -- Lock and let it settle
     SetVehicleOnGroundProperly(veh)
     SetVehicleDoorsLocked(veh, 1) -- unlocked — keys granted on entry
+    -- v1.1.4 — pre-set the doorslockstate statebag so qbx_vehiclekeys' enter-attempt
+    -- handler skips its spawnLockedIfParked roll (which was re-locking our targets).
+    Entity(veh).state:set('doorslockstate', 1, true)
     SetVehicleEngineOn(veh, false, true, true)
     SetEntityAsMissionEntity(veh, true, true)
 
@@ -347,11 +408,13 @@ CreateThread(function()
                             lib.hideTextUI()
 
                             local engineHealth = GetVehicleEngineHealth(veh)
+                            local bodyHealth   = GetVehicleBodyHealth(veh)  -- v1.1.0
                             local plate = (GetVehicleNumberPlateText(veh) or ''):gsub('%s+', '')
 
                             local result = lib.callback.await('distortionz_hijack:server:deliver', false, {
                                 coords       = pCoords,
                                 engineHealth = engineHealth,
+                                bodyHealth   = bodyHealth,  -- v1.1.0
                                 plate        = plate,
                             })
 
@@ -365,6 +428,12 @@ CreateThread(function()
 
                                 local payoutLine = ('Tier %s — %s · $%s'):format(result.tier, result.tierLabel, result.payout)
                                 Notify(payoutLine, result.tierColor or 'success', 8000)
+
+                                -- v1.1.0 — surface damage penalty if it took a chunk
+                                if result.penalty and result.penalty > 0 then
+                                    Wait(600)
+                                    Notify(('Damage cost you $%s'):format(result.penalty), 'error', 5000)
+                                end
 
                                 if result.lootDropped then
                                     Wait(800)

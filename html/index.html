@@ -38,6 +38,24 @@
             </div>
         </div>
 
+        <!-- v1.1.0 — Health bars + live penalty -->
+        <div class="panel-health hidden" id="healthBlock">
+            <div class="health-row">
+                <span class="health-label">ENGINE</span>
+                <div class="health-track"><div class="health-fill engine" id="engineFill"></div></div>
+                <span class="health-pct" id="enginePct">100%</span>
+            </div>
+            <div class="health-row">
+                <span class="health-label">BODY</span>
+                <div class="health-track"><div class="health-fill body" id="bodyFill"></div></div>
+                <span class="health-pct" id="bodyPct">100%</span>
+            </div>
+            <div class="penalty-row">
+                <span class="penalty-label">DAMAGE PENALTY</span>
+                <span class="penalty-value" id="penaltyValue">-$0</span>
+            </div>
+        </div>
+
         <div class="panel-footer">
             <span class="tier-pill" id="tierPill">COMMON</span>
             <span class="payout">

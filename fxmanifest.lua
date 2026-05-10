@@ -4,7 +4,7 @@ lua54 'yes'
 
 author 'Distortionz'
 description 'Distortionz Hijack — vehicle hijack contracts with tiered rewards, search zones, police alerts, damage tracking, and bonus loot drops.'
-version '1.0.5'
+version '1.1.5'
 repository 'https://github.com/Distortionzz/Distortionz_Hijack'
 
 ui_page 'html/index.html'

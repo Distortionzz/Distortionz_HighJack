@@ -7,7 +7,7 @@ Config = {}
 -- ─── Script meta ────────────────────────────────────────────────────
 Config.Script = {
     name    = 'Distortionz Hijack',
-    version = '1.0.5',
+    version = '1.1.5',
 }
 Config.CurrentVersion = Config.Script.version
 
@@ -42,12 +42,37 @@ Config.Contact = {
     targetIcon  = 'fa-solid fa-car-burst',
 }
 
--- ─── Drop-off locations (one is chosen at random per job) ───────────
+-- ─── Drop-off locations (one is chosen at random per job) ──────────
+-- All coordinates audited as outdoor, road-accessible, non-interior
+-- spots that won't trap players inside buildings or on roofs.
+-- vector4(x, y, z, heading) — heading aims the parked vehicle.
 Config.DropOffs = {
-    vector4(489.50, -1314.20, 29.20, 175.0),   -- impound lot, La Mesa
-    vector4(1233.10, -3258.30, 5.90, 0.0),     -- LSIA hangar zone
-    vector4(-417.50, -2789.40, 6.00, 90.0),    -- elysian island docks
-    vector4(2342.00, 3127.55, 47.96, 86.0),    -- sandy shores warehouse
+    -- LSIA / South side — back lot of the airport, wide-open tarmac
+    vector4(-995.50, -2727.45, 13.78,  60.0),    -- LSIA cargo apron, behind hangars
+    vector4(-1037.50, -2730.20, 21.20, 240.0),   -- LSIA fuel depot lot
+
+    -- Port of LS / docks — industrial open ground
+    vector4(488.10,  -3110.40, 6.07,  180.0),    -- Elysian Island shipping yard
+    vector4(151.10,  -3210.20, 5.85,   90.0),    -- Cypress Flats container lot
+    vector4(848.20,  -2987.55, 5.90,    0.0),    -- East port truck staging
+
+    -- East LS / La Mesa — impound vibes, all open lots
+    vector4(414.30,  -1623.50, 29.30,  50.0),    -- Mission Row impound back lot
+    vector4(681.10,  -2720.10, 18.90,  90.0),    -- Industrial railyard
+    vector4(708.50,  -965.60,  24.10, 180.0),    -- Davis Ave warehouse lot
+
+    -- Sandy Shores — desert rendezvous spots
+    vector4(1741.40, 3286.85, 41.10,   15.0),    -- Sandy Shores airfield apron
+    vector4(2422.50, 3132.30, 48.20,  100.0),    -- Sandy industrial yard
+    vector4(155.80,  3636.40, 39.90,  205.0),    -- Stab City open ground
+
+    -- Paleto Bay / Country
+    vector4(-401.85, 6039.40, 30.50,   45.0),    -- Paleto sawmill yard
+    vector4(85.50,   6433.20, 31.40,  315.0),    -- North country highway pull-off
+
+    -- Vinewood Hills / North LS
+    vector4(-560.10, -930.40, 23.00,   90.0),    -- Vinewood west parking
+    vector4(720.00,  120.50,  80.80,  270.0),    -- Vinewood Hills overlook lot
 }
 
 Config.DropOffMarker = {
@@ -143,6 +168,25 @@ Config.Rewards = {
 
     payAccount = 'cash',         -- 'cash', 'bank', or 'dirty' (markedbills item if using ox_inventory)
     dirtyMoneyItem = 'markedbills',
+}
+
+-- ─── v1.1.0 — Damage penalty (live preview + final deduction) ───────
+-- Each HP of damage lost from the vehicle reduces the payout.
+-- Engine health and body health are tracked separately. Damage is
+-- penalized per HP lost: a vehicle starts at 1000 engine + 1000 body
+-- (= 2000 max). Penalty = totalHpLost * dollarsPerHp.
+--
+-- Tier multipliers (S/A/B/C) still apply on top of the post-penalty
+-- amount so a clean fast delivery still rewards more than a slow one.
+--
+-- Server is the source of truth — client snapshots the live values to
+-- the HUD, but the final penalty is computed server-side at delivery
+-- to prevent tampering.
+Config.DamagePenalty = {
+    enabled         = true,
+    dollarsPerHp    = 0.75,    -- $ deducted per HP lost (engine + body combined)
+    minPayoutFloor  = 0,       -- payout cannot go below this (prevent negative)
+    snapshotIntervalMs = 500,  -- how often the client samples + sends to HUD
 }
 
 -- ─── Police alerts (chance-based, configurable) ─────────────────────

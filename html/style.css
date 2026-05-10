@@ -249,3 +249,89 @@ body {
     color: #28ff83;
     letter-spacing: -0.02em;
 }
+
+/* ─── v1.1.0 — Health bars + damage penalty ─────────────────────── */
+.panel-health {
+    margin-top: 10px;
+    padding: 10px 12px 11px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+.panel-health.hidden { display: none; }
+
+.health-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 42px;
+    align-items: center;
+    gap: 9px;
+}
+
+.health-label {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+}
+
+.health-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.health-fill {
+    height: 100%;
+    width: 100%;
+    border-radius: 3px;
+    transition: width 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+    background: linear-gradient(90deg, #28ff83, #6cff9c);
+    box-shadow: 0 0 8px rgba(40, 255, 131, 0.35);
+}
+
+.health-fill.warn {
+    background: linear-gradient(90deg, #ffc14a, #ffd76c);
+    box-shadow: 0 0 8px rgba(255, 193, 74, 0.35);
+}
+.health-fill.crit {
+    background: linear-gradient(90deg, #ff4a4a, #ff7a6c);
+    box-shadow: 0 0 8px rgba(255, 74, 74, 0.45);
+}
+
+.health-pct {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.78);
+    text-align: right;
+    letter-spacing: -0.02em;
+}
+
+.penalty-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 3px;
+    padding-top: 7px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.06);
+}
+
+.penalty-label {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+}
+
+.penalty-value {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 13px;
+    font-weight: 900;
+    color: #ff4a4a;
+    letter-spacing: -0.02em;
+    transition: color 0.2s ease;
+}
+.penalty-value.zero { color: rgba(255, 255, 255, 0.35); }
